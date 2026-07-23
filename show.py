@@ -5,8 +5,8 @@ from maths import B1,B2
 fig, ax = plt.subplots()
 line1, = ax.plot([], [])
 line2, = ax.plot([], [])
-body1 = ax.scatter(B1.path_x[0],B1.path_y[0],10)
-body2 = ax.scatter(B2.path_x[0],B2.path_y[0],10)
+body1 = ax.scatter(B1.path_x[0],B1.path_y[0],B1.mass)
+body2 = ax.scatter(B2.path_x[0],B2.path_y[0],B2.mass)
 ax.set_xlim(-1050,1050)
 ax.set_ylim(-1050,1050)
 
