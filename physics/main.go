@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func main() {
+func runConsole() {
 	Vector := func() float64 {
 		dx = x2 - x1
 		dy = y2 - y1
@@ -16,7 +16,7 @@ func main() {
 	}
 
 	forcefactor := func() float64 {
-		ForceFactor = G * ((m1 * m2) / (math.Pow(distance, 3)))
+		ForceFactor = G * ((m1 * m2) / (math.Pow(distance, 3) + eps))
 		fmt.Printf("Сила: %f \n", ForceFactor)
 		return ForceFactor
 	}
@@ -64,3 +64,4 @@ func main() {
 	speed()
 	position()
 }
+
