@@ -6,24 +6,30 @@ import (
 )
 
 func main() {
-	const g int = 2
-	var m1 int = 10
-	var m2 int = 20
-	var radius int = 2
-	var m1_x float64 = 1
-	var m1_y float64 = 1
-	var m2_x float64 = 7
-	var m2_y float64 = 6
-	form := func() float64 {
-		var F float64 = float64(g * ((m1 * m2) / (radius * radius)))
-		fmt.Println(F)
-		return F
+	vector := func() float64{
+		r = (x2-x2 y2-y1)
 	}
 	dist := func() float64 {
-		var distance float64 = math.Sqrt((math.Pow(m2_x-m1_x, 2)) + (math.Pow(m2_y-m1_y, 2)))
-		fmt.Println(distance)
+		distance = math.Sqrt((math.Pow(x2-x1, 2) + math.Pow(y2-y1, 2))) + eps
+		fmt.Printf("Dist: %f \n", distance)
 		return distance
 	}
-	form()
+
+
+	force := func() float64 {
+		F = G * ((m1 * m2) / (distance * distance))
+		fmt.Printf("Сила: %f \n", F)
+		return F
+	}
+
+
+	acceleration := func() (float64, float64) {
+		a1 = F / m1
+		a2 = -F / m2
+		fmt.Printf("Acc: %f %f", a1, a2)
+		return a1, a2
+	}
 	dist()
+	force()
+	acceleration()
 }
