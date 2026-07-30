@@ -64,4 +64,3 @@ func runConsole() {
 	speed()
 	position()
 }
-
