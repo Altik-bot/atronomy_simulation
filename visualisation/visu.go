@@ -1,88 +1,80 @@
 package main
 
 import (
-	"fmt"
+	"image/color"
+	"log"
 	"os"
-	"strings"
-	"time"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// Параметры визуализации
 const (
-	gridWidth     = 60 // ширина поля в символах
-	gridHeight    = 24 // высота поля в символах
-	stepsTotal    = 1000
-	stepsPerFrame = 5 // ускорил анимацию, просчитывая больше шагов физики за 1 кадр
-	frameDelay    = 40 * time.Millisecond
-)
+	screenWidth  = 900
+	screenHeight = 900
 
-// Границы мира (только первая четверть от 0.0)
-const (
 	worldMinX = 0.0
-	worldMaxX = 14.0
+	worldMaxX = 30.0
 	worldMinY = 0.0
-	worldMaxY = 14.0
+	worldMaxY = 30.0
+
+	stepsPerFrame = 5
 )
 
-func worldToGrid(x, y float64) (int, int) {
-	col := int((x - worldMinX) / (worldMaxX - worldMinX) * float64(gridWidth-1))
-	row := int((y - worldMinY) / (worldMaxY - worldMinY) * float64(gridHeight-1))
-	return col, row
+type Game struct{}
+
+func worldToScreen(x, y float64) (float32, float32) {
+	sx := float32((x - worldMinX) / (worldMaxX - worldMinX) * screenWidth)
+
+	// Переворачиваем Y, чтобы вверх был положительным
+	sy := float32(screenHeight - (y-worldMinY)/(worldMaxY-worldMinY)*screenHeight)
+
+	return sx, sy
 }
 
-func clearScreen() {
-	fmt.Print("\033[H\033[2J")
-}
-
-// silentPhysicsStep вызывает готовую логику из physics.go,
-// "затыкая" её вывод.
+// Выполняет физику без вывода в консоль
 func silentPhysicsStep() {
-	original := os.Stdout
-	devNull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
-	if err == nil {
-		os.Stdout = devNull
-		defer func() {
-			os.Stdout = original
-			devNull.Close()
-		}()
-	}
-	// Вызов твоей функции из physics.go (в предыдущих примерах она называлась stepPhysics или runConsole)
+	old := os.Stdout
+	devNull, _ := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
+
+	os.Stdout = devNull
 	runConsole()
+	os.Stdout = old
+
+	devNull.Close()
 }
 
-// enforceBoundaries удерживает тела строго в первой четверти (x > 0, y > 0)
-// и в пределах видимости (worldMax).
+// Границы мира
 func enforceBoundaries() {
-	// Границы для тела 1
+
 	if x1 <= worldMinX {
 		x1 = worldMinX
-		v_x1 = -v_x1 // упругий отскок, меняем направление скорости
-	}
-	if y1 <= worldMinY {
-		y1 = worldMinY
-		v_y1 = -v_y1
+		v_x1 = -v_x1
 	}
 	if x1 >= worldMaxX {
 		x1 = worldMaxX
 		v_x1 = -v_x1
+	}
+	if y1 <= worldMinY {
+		y1 = worldMinY
+		v_y1 = -v_y1
 	}
 	if y1 >= worldMaxY {
 		y1 = worldMaxY
 		v_y1 = -v_y1
 	}
 
-	// Границы для тела 2
 	if x2 <= worldMinX {
 		x2 = worldMinX
+		v_x2 = -v_x2
+	}
+	if x2 >= worldMaxX {
+		x2 = worldMaxX
 		v_x2 = -v_x2
 	}
 	if y2 <= worldMinY {
 		y2 = worldMinY
 		v_y2 = -v_y2
-	}
-	if x2 >= worldMaxX {
-		x2 = worldMaxX
-		v_x2 = -v_x2
 	}
 	if y2 >= worldMaxY {
 		y2 = worldMaxY
@@ -90,64 +82,54 @@ func enforceBoundaries() {
 	}
 }
 
-func drawFrame(step int, t float64) {
-	grid := make([][]rune, gridHeight)
-	for i := range grid {
-		grid[i] = make([]rune, gridWidth)
-		for j := range grid[i] {
-			grid[i][j] = ' ' // Заменил точки на пробелы для более чистого отображения
-		}
+func (g *Game) Update() error {
+
+	for i := 0; i < stepsPerFrame; i++ {
+		silentPhysicsStep()
+		enforceBoundaries()
 	}
 
-	// Отрисовка рамок (наши физические границы)
-	for j := 0; j < gridWidth; j++ {
-		grid[0][j] = '-'
-		grid[gridHeight-1][j] = '-'
-	}
-	for i := 0; i < gridHeight; i++ {
-		grid[i][0] = '|'
-		grid[i][gridWidth-1] = '|'
-	}
+	return nil
+}
 
-	// Перевод координат в сетку
-	col1, row1 := worldToGrid(x1, y1)
-	col2, row2 := worldToGrid(x2, y2)
+func (g *Game) Draw(screen *ebiten.Image) {
 
-	// Отрисовка Тела 1
-	if row1 >= 0 && row1 < gridHeight && col1 >= 0 && col1 < gridWidth {
-		grid[row1][col1] = 'O' // Кружок для 1 тела
-	}
+	screen.Fill(color.RGBA{20, 20, 20, 255})
 
-	// Отрисовка Тела 2 с проверкой на наложение
-	if row2 >= 0 && row2 < gridHeight && col2 >= 0 && col2 < gridWidth {
-		if grid[row2][col2] == 'O' {
-			grid[row2][col2] = 'X' // Тела столкнулись
-		} else {
-			grid[row2][col2] = 'o' // Маленький кружок для 2 тела
-		}
-	}
+	xBody1, yBody1 := worldToScreen(x1, y1)
+	xBody2, yBody2 := worldToScreen(x2, y2)
 
-	// Вывод на экран
-	clearScreen()
-	fmt.Printf("Шаг: %d   Время: %.2f c \n", step, t)
-	fmt.Println(strings.Repeat("=", gridWidth))
-	for _, row := range grid {
-		fmt.Println(string(row))
-	}
-	fmt.Println(strings.Repeat("=", gridWidth))
-	fmt.Printf("Тело 1: x=%.2f  y=%.2f | v_x=%.2f v_y=%.2f\n", x1, y1, v_x1, v_y1)
-	fmt.Printf("Тело 2: x=%.2f  y=%.2f | v_x=%.2f v_y=%.2f\n", x2, y2, v_x2, v_y2)
-	fmt.Printf("Расстояние: %.3f\n", distance)
+	// Тело 1
+	vector.DrawFilledCircle(
+		screen,
+		xBody1,
+		yBody1,
+		14,
+		color.RGBA{255, 70, 70, 255},
+		false,
+	)
+
+	// Тело 2
+	vector.DrawFilledCircle(
+		screen,
+		xBody2,
+		yBody2,
+		7,
+		color.RGBA{70, 170, 255, 255},
+		false,
+	)
+}
+
+func (g *Game) Layout(_, _ int) (int, int) {
+	return screenWidth, screenHeight
 }
 
 func main() {
-	for step := 1; step <= stepsTotal; step++ {
-		for i := 0; i < stepsPerFrame; i++ {
-			silentPhysicsStep() // 1. Считаем физику
-			enforceBoundaries() // 2. Проверяем и корректируем границы (отскок)
-		}
 
-		drawFrame(step*stepsPerFrame, float64(step*stepsPerFrame)*dt)
-		time.Sleep(frameDelay)
+	ebiten.SetWindowTitle("Симуляция двух тел")
+	ebiten.SetWindowSize(screenWidth, screenHeight)
+
+	if err := ebiten.RunGame(&Game{}); err != nil {
+		log.Fatal(err)
 	}
 }
