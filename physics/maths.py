@@ -1,5 +1,5 @@
 import math,time
-
+import csv
 class Body:
     def __init__(self,mass,init_position_x,init_position_y,init_velocity_x,init_velocity_y,force_x,force_y):
         self.mass = mass
@@ -9,9 +9,10 @@ class Body:
         self.path_x = []
         self.path_y = []
 
-B1 = Body(1000,10,0,0,0,0,0)
-B2 = Body(1000,0,0,10,0,0,0)
-bodies = [B1,B2]
+B1 = Body(1,-0.97000436,0.24308753,0.466203685, 0.43236573,0,0)
+B2 = Body(1,0.97000436,-0.24308753,0.466203685, 0.43236573,0,0)
+B3 = Body(1,0,0,-0.93240737, -0.86473146,0,0)
+bodies = [B1,B2,B3]
 g = 1
 t = 0.01
 def calc(g,bodies,t,eps):   
@@ -41,6 +42,14 @@ def calc(g,bodies,t,eps):
         body.path_x.append(body.position[0])
         body.path_y.append(body.position[1])
 
+def writedown(bodies):
+    with open("output1.csv",mode = 'w')as f :
+        a = csv.writer(f,delimiter = ",")
+        a.writerow(["bodies_id","path_x","i.path_y"])
+        for i,body in enumerate(bodies):
+            for x,y in zip(body.path_x,body.path_y):
+                a.writerow([i,x,y])
 for _ in  range(10000):
-    calc(g,bodies,t,1)
+    calc(g,bodies,t,0.0001)
+writedown(bodies)    
 print("done")
