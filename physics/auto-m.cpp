@@ -3,20 +3,21 @@
 #include <cmath>
 #include <fstream>
 #include <random>
+#include "math.hpp"
 using namespace std;
-struct Body{
-    float mass;
-    float pos_x;
-    float pos_y;
-    float vel_x;
-    float vel_y;
-    float force_x;
-    float force_y;
-    vector <float> acceleration;
-    vector <float> path_x;
-    vector <float> path_y;
+// struct Body{
+//     float mass;
+//     float pos_x;
+//     float pos_y;
+//     float vel_x;
+//     float vel_y;
+//     float force_x;
+//     float force_y;
+//     vector <float> acceleration;
+//     vector <float> path_x;
+//     vector <float> path_y;
 
-};
+// };
 vector <Body> degenerate(float n,float mass,float pos_x,float pos_y,float vel_x,float vel_y){
     vector <Body> bodies;
     random_device rd;
@@ -95,4 +96,15 @@ int main(){
     cout<<b.size()<<endl;
     save_to_file(b);
     return 0;
+}
+void simulate(vector <Body>&b, int n){
+
+    for (int i = 0; i <= n ; i++ ){
+    calc(1,b,0.01,0.001);
+
+    }
+    cout<<b.size()<<endl;
+    save_to_file(b);
+
+
 }
