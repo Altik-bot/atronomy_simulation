@@ -15,7 +15,11 @@ void save_to_files(unordered_map <int,float> result) {
     for (const auto& pair: result){
         values.push_back(pair);
     }
-    for (size_t i = 1; i < values.size(); i++) {
+    sort(values.begin(), values.end(),
+     [](const auto& a, const auto& b){
+         return a.first < b.first;
+     });
+    for (size_t i = 0; i < values.size(); i++) {
             auto [n2, t2] = values[i];
             file << n2 << ","
                  << t2 << "\n";
